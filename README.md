@@ -9,7 +9,6 @@ Este proyecto consiste en el desarrollo de una aplicación de citas similar a Ti
 - **Fredt Alexander Olivero**  
 
 ## Requerimientos  
-Asegúrate de tener instalados los siguientes componentes:  
 - [Node.js](https://nodejs.org/)  
 - [React](https://react.dev/)  
 - [Express](https://expressjs.com/)  
