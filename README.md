@@ -1,28 +1,29 @@
 # Software2_CodeVing_Loleros
 
- Software # 2 
- CodeVing
- Loleros
+## Descripción  
+Este proyecto consiste en el desarrollo de una aplicación de citas similar a Tinder, aplicando los conocimientos adquiridos en la materia.  
 
-# Integrantes:
-# Yojhan Arias Correa
-# David Peñuela Morales
-# Fredt Alexander Olivero 
+## Integrantes  
+- **Yojhan Arias Correa**  
+- **David Peñuela Morales**  
+- **Fredt Alexander Olivero**  
 
-# Descripcion
-# Este proyecto esta enfocado en la realizacion de una aplicacion de citas parecido a Tinder, utilizando los conocimientos otorgados por el profesor.
+## Requerimientos  
+Asegúrate de tener instalados los siguientes componentes:  
+- [Node.js](https://nodejs.org/)  
+- [React](https://react.dev/)  
+- [Express](https://expressjs.com/)  
+- [Postman](https://www.postman.com/)  
 
-# Intrucciones de compilacion y ejecucion:
+## Instrucciones de instalación y ejecución  
+1. Crear una carpeta y abrir **Visual Studio Code**.  
+2. Abrir la carpeta en **Visual Studio Code**.  
+3. Abrir la terminal en **VS Code**.  
+4. Inicializar Git con:  
+   ```sh
+   git init
 
-# Crear una carpeta
-# Abrir visual studio
-# Abrir la carpeta en visual
-# Abrir terminal
-# Escribir el comando git init
-# Escribir el comando ( git clone https://github.com/YojhanxA/Software2_CodeVing_Loleros )
-# npm run dev
-
-# Requerimientos:
-
-# React, Node.js, Express, Postman
+   Clonar el repositorio con: git clone https://github.com/YojhanxA/Software2_CodeVing_Loleros
+   Instalar las dependencias del proyecto: npm install
+   Ejecutar la aplicación con: npm run dev
 
