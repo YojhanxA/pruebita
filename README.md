@@ -1,8 +1,8 @@
 # Software2_CodeVing_Loleros
 
-Software # 2
-CodeVing
-Loleros
+# Software # 2
+# CodeVing
+# Loleros
 
 # Integrantes:
 # Yojhan Arias Correa
