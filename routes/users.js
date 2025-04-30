@@ -5,6 +5,7 @@ const {
   list,
   match,
   myMatchs,
+  loginUser,
 } = require("../controllers/usersController");
 const {
   createUserRules,
@@ -14,6 +15,7 @@ const {
 } = require("../validators/usersValidator");
 const router = express.Router();
 
+router.post("/login", loginUser);
 router.post("/register", createUserRules, isValid, register);
 router.post("/auth", createUserRules, isVisValidAuth, auth);
 router.get("/list", list);
