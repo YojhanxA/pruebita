@@ -1,5 +1,6 @@
 const { query, body } = require("express-validator");
 const { validationResult } = require("express-validator");
+const User = require("../models/Users");
 const users = [];
 const myMatch = [];
 const createUserRules = [
@@ -9,18 +10,28 @@ const createUserRules = [
   body("password").notEmpty().escape().isString(),
 ];
 
-const isValid = (req, res, next) => {
+const isValid = async (req, res, next) => {
   const result = validationResult(req);
-
   if (!result.isEmpty()) {
-    res.status(422).json({
-      errors: result.array(),
-    });
-  } else {
-    const { id, name, email, password } = req.body;
-    const newUser = { id, name, email, password };
-    users.push(newUser);
+    return res.status(422).json({ errors: result.array() });
+  }
+
+  const { id, name, email, password } = req.body;
+
+  try {
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(409).json({ message: "El usuario ya existe" });
+    }
+
+    const newUser = new User({ id, name, email, password });
+    await newUser.save();
+
+    // Ya está guardado en Mongo, sigue la siguiente función
     next();
+  } catch (error) {
+    console.error("Error registrando usuario:", error);
+    res.status(500).json({ message: "Error en el servidor" });
   }
 };
 
