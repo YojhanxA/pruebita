@@ -4,10 +4,14 @@ const User = require("../models/Users");
 const users = [];
 const myMatch = [];
 const createUserRules = [
-  body("id").notEmpty().escape().isInt(),
-  body("name").notEmpty().escape().isString(),
+  body("nombre").notEmpty().escape().isString(),
+  body("edad").notEmpty().escape().isInt({ min: 18 }), // Ejemplo: asegurar que la edad sea mayor o igual a 18
+  body("genero").notEmpty().escape().isString(),
   body("email").notEmpty().escape().isEmail(),
-  body("password").notEmpty().escape().isString(),
+  body("password").notEmpty().escape().isString().isLength({ min: 6 }), // Ejemplo: requerir una contraseña de al menos 6 caracteres
+  body("preferencias").optional().isObject(), // Las preferencias son opcionales y deben ser un objeto
+  body("ubicacion").optional().escape().isString(), // La ubicación es opcional y debe ser una cadena
+  body("fotoPerfil").optional().escape().isURL(), // La foto de perfil es opcional y debe ser una URL
 ];
 
 const isValid = async (req, res, next) => {
@@ -16,7 +20,7 @@ const isValid = async (req, res, next) => {
     return res.status(422).json({ errors: result.array() });
   }
 
-  const { id, name, email, password } = req.body;
+  const { nombre, email } = req.body; // Extrae con el nombre correcto
 
   try {
     const userExists = await User.findOne({ email });
@@ -24,14 +28,11 @@ const isValid = async (req, res, next) => {
       return res.status(409).json({ message: "El usuario ya existe" });
     }
 
-    const newUser = new User({ id, name, email, password });
-    await newUser.save();
-
-    // Ya está guardado en Mongo, sigue la siguiente función
+    // La validación pasó y el usuario no existe, pasa al siguiente middleware (el controlador register)
     next();
   } catch (error) {
-    console.error("Error registrando usuario:", error);
-    res.status(500).json({ message: "Error en el servidor" });
+    console.error("Error verificando usuario:", error);
+    res.status(500).json({ message: "Error en el servidor al verificar el usuario" });
   }
 };
 
