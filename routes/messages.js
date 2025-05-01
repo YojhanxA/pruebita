@@ -4,7 +4,7 @@ const {
     sendMessage,
     getConversation,
 } = require("../controllers/messagesController");
-const { authenticateToken } = require("../controllers/usersController"); // Reutiliza el middleware de autenticación
+const { authenticateToken } = require("../middleware/usersValidator"); // Reutiliza el middleware de autenticación
 const router = express.Router();
 
 router.post("/messages", authenticateToken, sendMessage);
