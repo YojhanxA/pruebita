@@ -4,8 +4,9 @@ const Swipes = require("../models/Swipes");
 const Matches = require("../models/Matches");
 const jwt = require("jsonwebtoken");
 const Chat = require("../models/chat");
-const User = require("../models/Users"); 
+const User = require("../models/Users");
 const { v4: uuidv4 } = require("uuid");
+const { getIO } = require("../socket"); // Asegúrate de importar bien esto
 
 const loginUser = async (req, res) => {
   res.status(200).json({ message: "Login exitoso" });
@@ -101,7 +102,7 @@ const swipe = async (req, res) => {
           usuario2_id: destinoId,
         });
         const savedMatch = await newMatch.save();
-       
+
         res.status(200).json({ message: "¡Es un match!", match: savedMatch });
       } else {
         res.status(200).json({ message: `Le diste ${accion} a este usuario.` });
@@ -117,7 +118,7 @@ const swipe = async (req, res) => {
   }
 };
 const getMatch = async (req, res) => {
-  const userId = req.userId; 
+  const userId = req.userId;
 
   try {
     // Buscar el match del usuario
@@ -134,29 +135,26 @@ const getMatch = async (req, res) => {
       "messages"
     );
 
-   
     const messages = chat ? chat.messages : [];
 
     // Obtener los nombres de los usuarios involucrados en el match
     const usuario1 = await User.findOne({ id: match.usuario1_id });
     const usuario2 = await User.findOne({ id: match.usuario2_id });
 
-    
     const messagesWithNames = messages.map((message) => {
-      
       const sender =
         message.sender_id.toString() === match.usuario1_id.toString()
           ? usuario1.nombre
           : usuario2.nombre;
       return {
         ...message.toObject(),
-        senderName: sender, 
+        senderName: sender,
       };
     });
 
     res.json({
       match: match,
-      messages: messagesWithNames, 
+      messages: messagesWithNames,
     });
   } catch (error) {
     console.error(error);
@@ -167,10 +165,10 @@ const getMatch = async (req, res) => {
 };
 const sendMessage = async (req, res) => {
   const { matchId, message } = req.body;
-  const userId = req.userId; 
+  const userId = req.userId;
 
   try {
-    const match = await Matches.findOne({ id: matchId }); 
+    const match = await Matches.findOne({ id: matchId });
 
     if (
       !match ||
@@ -179,7 +177,6 @@ const sendMessage = async (req, res) => {
       return res.status(404).json({ message: "No tienes acceso a este chat." });
     }
 
-    // Buscar o crear el chat relacionado al match
     let chat = await Chat.findOne({ match_id: matchId });
 
     if (!chat) {
@@ -190,31 +187,32 @@ const sendMessage = async (req, res) => {
       sender_id: userId,
       receiver_id:
         userId === match.usuario1_id ? match.usuario2_id : match.usuario1_id,
-      message: message,
+      message,
       createdAt: new Date(),
     };
 
     chat.messages.push(newMessage);
     await chat.save();
 
-    // Obtener el nombre del remitente
-    const senderName =
+    const senderUser =
       userId === match.usuario1_id
-        ? await User.findOne({ id: match.usuario1_id }).then(
-            (user) => user.nombre
-          )
-        : await User.findOne({ id: match.usuario2_id }).then(
-            (user) => user.nombre
-          );
+        ? await User.findOne({ id: match.usuario1_id })
+        : await User.findOne({ id: match.usuario2_id });
 
- 
-    res.json({ message: { ...newMessage, senderName } });
+    const fullMessage = {
+      ...newMessage,
+      senderName: senderUser?.nombre || "Desconocido",
+    };
+
+    const io = getIO(); // Tu instancia global de socket.io
+    io.emit("chat message", fullMessage); // Enviar a todos
+
+    res.json({ message: fullMessage });
   } catch (error) {
     console.error("Error en sendMessage:", error);
     res.status(500).json({ message: "Error al enviar el mensaje" });
   }
 };
-
 module.exports = {
   register,
   loginUser,
