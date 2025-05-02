@@ -3,7 +3,9 @@ const Users = require("../models/Users");
 const Swipes = require("../models/Swipes");
 const Matches = require("../models/Matches");
 const jwt = require("jsonwebtoken");
-const { v4: uuidv4 } = require("uuid"); // Importa uuid
+const Chat = require("../models/chat");
+const User = require("../models/Users"); 
+const { v4: uuidv4 } = require("uuid");
 
 const loginUser = async (req, res) => {
   res.status(200).json({ message: "Login exitoso" });
@@ -99,7 +101,7 @@ const swipe = async (req, res) => {
           usuario2_id: destinoId,
         });
         const savedMatch = await newMatch.save();
-        // Aquí podrías emitir un evento de Socket.io para notificar a los usuarios del match
+       
         res.status(200).json({ message: "¡Es un match!", match: savedMatch });
       } else {
         res.status(200).json({ message: `Le diste ${accion} a este usuario.` });
@@ -114,33 +116,102 @@ const swipe = async (req, res) => {
       .json({ message: "Error en el servidor al procesar el swipe" });
   }
 };
+const getMatch = async (req, res) => {
+  const userId = req.userId; 
 
-const getMatches = async (req, res) => {
-  const userId = req.userId; // Obtenido del middleware de autenticación
   try {
-    const matches = await Matches.find({
+    // Buscar el match del usuario
+    const match = await Matches.findOne({
       $or: [{ usuario1_id: userId }, { usuario2_id: userId }],
-    })
-      .populate("usuario1_id", "nombre fotoPerfil")
-      .populate("usuario2_id", "nombre fotoPerfil");
+    });
 
-    // Formatear la respuesta para que sea más fácil de usar en el frontend
-    const formattedMatches = matches.map((match) => {
-      const matchedUser =
-        match.usuario1_id.id === userId ? match.usuario2_id : match.usuario1_id;
+    if (!match) {
+      return res.status(404).json({ message: "No tienes un match." });
+    }
+
+    // Obtener los mensajes del chat relacionado con el match
+    const chat = await Chat.findOne({ match_id: match.id }).populate(
+      "messages"
+    );
+
+   
+    const messages = chat ? chat.messages : [];
+
+    // Obtener los nombres de los usuarios involucrados en el match
+    const usuario1 = await User.findOne({ id: match.usuario1_id });
+    const usuario2 = await User.findOne({ id: match.usuario2_id });
+
+    
+    const messagesWithNames = messages.map((message) => {
+      
+      const sender =
+        message.sender_id.toString() === match.usuario1_id.toString()
+          ? usuario1.nombre
+          : usuario2.nombre;
       return {
-        id: match.id,
-        user: matchedUser,
-        timestamp: match.timestamp,
+        ...message.toObject(),
+        senderName: sender, 
       };
     });
 
-    res.status(200).json(formattedMatches);
+    res.json({
+      match: match,
+      messages: messagesWithNames, 
+    });
   } catch (error) {
-    console.error("Error al obtener los matches:", error);
+    console.error(error);
     res
       .status(500)
-      .json({ message: "Error en el servidor al obtener los matches" });
+      .json({ message: "Error al obtener el match y los mensajes." });
+  }
+};
+const sendMessage = async (req, res) => {
+  const { matchId, message } = req.body;
+  const userId = req.userId; 
+
+  try {
+    const match = await Matches.findOne({ id: matchId }); 
+
+    if (
+      !match ||
+      (match.usuario1_id !== userId && match.usuario2_id !== userId)
+    ) {
+      return res.status(404).json({ message: "No tienes acceso a este chat." });
+    }
+
+    // Buscar o crear el chat relacionado al match
+    let chat = await Chat.findOne({ match_id: matchId });
+
+    if (!chat) {
+      chat = new Chat({ match_id: matchId, messages: [] });
+    }
+
+    const newMessage = {
+      sender_id: userId,
+      receiver_id:
+        userId === match.usuario1_id ? match.usuario2_id : match.usuario1_id,
+      message: message,
+      createdAt: new Date(),
+    };
+
+    chat.messages.push(newMessage);
+    await chat.save();
+
+    // Obtener el nombre del remitente
+    const senderName =
+      userId === match.usuario1_id
+        ? await User.findOne({ id: match.usuario1_id }).then(
+            (user) => user.nombre
+          )
+        : await User.findOne({ id: match.usuario2_id }).then(
+            (user) => user.nombre
+          );
+
+ 
+    res.json({ message: { ...newMessage, senderName } });
+  } catch (error) {
+    console.error("Error en sendMessage:", error);
+    res.status(500).json({ message: "Error al enviar el mensaje" });
   }
 };
 
@@ -149,5 +220,6 @@ module.exports = {
   loginUser,
   list,
   swipe,
-  getMatches,
+  getMatch,
+  sendMessage,
 };

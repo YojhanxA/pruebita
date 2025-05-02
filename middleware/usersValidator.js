@@ -6,13 +6,13 @@ const users = [];
 const myMatch = [];
 const createUserRules = [
   body("nombre").notEmpty().escape().isString(),
-  body("edad").notEmpty().escape().isInt({ min: 18 }), // Ejemplo: asegurar que la edad sea mayor o igual a 18
+  body("edad").notEmpty().escape().isInt({ min: 18 }), 
   body("genero").notEmpty().escape().isString(),
   body("email").notEmpty().escape().isEmail(),
-  body("password").notEmpty().escape().isString().isLength({ min: 6 }), // Ejemplo: requerir una contraseña de al menos 6 caracteres
-  body("preferencias").optional().isObject(), // Las preferencias son opcionales y deben ser un objeto
-  body("ubicacion").optional().escape().isString(), // La ubicación es opcional y debe ser una cadena
-  body("fotoPerfil").optional().escape().isURL(), // La foto de perfil es opcional y debe ser una URL
+  body("password").notEmpty().escape().isString().isLength({ min: 6 }), 
+  body("preferencias").optional().isObject(), 
+  body("ubicacion").optional().escape().isString(),
+  body("fotoPerfil").optional().escape().isURL(), 
 ];
 
 const isValid = async (req, res, next) => {
@@ -21,7 +21,7 @@ const isValid = async (req, res, next) => {
     return res.status(422).json({ errors: result.array() });
   }
 
-  const { nombre, email } = req.body; // Extrae con el nombre correcto
+  const { nombre, email } = req.body; 
 
   try {
     const userExists = await User.findOne({ email });
@@ -29,7 +29,7 @@ const isValid = async (req, res, next) => {
       return res.status(409).json({ message: "El usuario ya existe" });
     }
 
-    // La validación pasó y el usuario no existe, pasa al siguiente middleware (el controlador register)
+   
     next();
   } catch (error) {
     console.error("Error verificando usuario:", error);
@@ -88,7 +88,7 @@ const matches = (req, res, next) => {
   }
 };
 
-// Middleware para autenticación (ejemplo, necesitarás adaptarlo a tu flujo)
+
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
@@ -98,6 +98,7 @@ const authenticateToken = (req, res, next) => {
   jwt.verify(token, process.env.SECRET_JWT, (err, user) => {
     if (err) return res.sendStatus(403);
     req.userId = user.userId;
+    req.nombre = user.nombre;
     next();
   });
 };

@@ -1,8 +1,8 @@
 // index.js
 const express = require("express");
+const cors = require("cors");
 const { dbConection } = require("./database/config");
 const usersRoutes = require("./routes/users");
-const messagesRoutes = require("./routes/messages"); // Importa las rutas de mensajes
 const http = require("http");
 const { Server, Socket } = require("socket.io");
 require("dotenv").config();
@@ -11,9 +11,9 @@ const PORT = process.env.APP_PORT;
 const app = express();
 
 const httpServer = http.createServer(app);
+app.use(cors());
 app.use(express.json());
 app.use("/api", usersRoutes);
-app.use("/api", messagesRoutes); // Usa las rutas de mensajes
 
 const io = new Server(httpServer, {
   connectionStateRecovery: {},
@@ -32,7 +32,7 @@ io.on("connection", (socket = Socket) => {
     console.log("Mensaje recibido:", JSON.stringify(payload));
     io.emit("chat message", payload);
 
-    if (callback) callback(); // permite que el frontend desbloquee el input
+    if (callback) callback();
   });
 });
 
