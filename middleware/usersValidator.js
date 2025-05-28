@@ -5,14 +5,15 @@ const jwt = require("jsonwebtoken");
 const users = [];
 const myMatch = [];
 const createUserRules = [
+  body("ciudad").notEmpty().escape().isString(),
   body("nombre").notEmpty().escape().isString(),
-  body("edad").notEmpty().escape().isInt({ min: 18 }), 
+  body("edad").notEmpty().escape().isInt({ min: 18 }),
   body("genero").notEmpty().escape().isString(),
   body("email").notEmpty().escape().isEmail(),
-  body("password").notEmpty().escape().isString().isLength({ min: 6 }), 
-  body("preferencias").optional().isObject(), 
+  body("password").notEmpty().escape().isString().isLength({ min: 6 }),
+  body("preferencias").optional().isObject(),
   body("ubicacion").optional().escape().isString(),
-  body("fotoPerfil").optional().escape().isURL(), 
+  body("fotoPerfil").optional().escape().isURL(),
 ];
 
 const isValid = async (req, res, next) => {
@@ -21,7 +22,7 @@ const isValid = async (req, res, next) => {
     return res.status(422).json({ errors: result.array() });
   }
 
-  const { nombre, email } = req.body; 
+  const { nombre, email } = req.body;
 
   try {
     const userExists = await User.findOne({ email });
@@ -29,7 +30,6 @@ const isValid = async (req, res, next) => {
       return res.status(409).json({ message: "El usuario ya existe" });
     }
 
-   
     next();
   } catch (error) {
     console.error("Error verificando usuario:", error);
@@ -87,7 +87,6 @@ const matches = (req, res, next) => {
     next();
   }
 };
-
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];

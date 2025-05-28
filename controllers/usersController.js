@@ -15,6 +15,7 @@ const loginUser = async (req, res) => {
 const register = async (req, res) => {
   try {
     const {
+      ciudad,
       nombre,
       edad,
       genero,
@@ -33,6 +34,7 @@ const register = async (req, res) => {
     }
 
     const newUser = new Users({
+      ciudad,
       nombre,
       edad,
       genero,
@@ -55,17 +57,27 @@ const register = async (req, res) => {
       .json({ message: "Error en el servidor al registrar el usuario" });
   }
 };
-
 const list = async (req, res) => {
   try {
-    // Buscar el usuario actual por su UUID (el 'id' que generaste)
+    // Buscar el usuario actual por su UUID
     const currentUser = await Users.findOne({ id: req.userId });
     if (!currentUser) {
       return res.status(404).json({ message: "Usuario actual no encontrado" });
     }
 
-    // Buscar todos los demás usuarios excluyendo al usuario actual por su UUID
-    const users = await Users.find({ id: { $ne: req.userId } });
+    const { ciudad } = req.body;
+
+    // Filtro base para excluir al usuario actual
+    const filter = { id: { $ne: req.userId } };
+
+    // Si ciudad existe y NO es "todos", entonces filtro por ciudad
+    if (ciudad && ciudad.toLowerCase() !== "todos") {
+      filter.ciudad = ciudad;
+    }
+
+    // Buscar usuarios según filtro
+    const users = await Users.find(filter);
+
     res.status(200).json(users);
   } catch (error) {
     console.error("Error al listar usuarios:", error);
