@@ -59,33 +59,50 @@ const register = async (req, res) => {
 };
 const list = async (req, res) => {
   try {
-    // Buscar el usuario actual por su UUID
     const currentUser = await Users.findOne({ id: req.userId });
     if (!currentUser) {
       return res.status(404).json({ message: "Usuario actual no encontrado" });
     }
 
-    const { ciudad } = req.body;
+    const { ciudad } = req.query;
 
-    // Filtro base para excluir al usuario actual
-    const filter = { id: { $ne: req.userId } };
+    // Obtener swipes hechos por el usuario actual (usando UUID)
+    const swipesRealizados = await Swipes.find({
+      usuario_origen_id: currentUser.id,
+    });
 
-    // Si ciudad existe y NO es "todos", entonces filtro por ciudad
+    const idsSwiped = swipesRealizados.map((s) => s.usuario_destino_id);
+
+    // Obtener matches (también comparando UUIDs)
+    const matches = await Matches.find({
+      $or: [
+        { usuario1_id: currentUser.id },
+        { usuario2_id: currentUser.id },
+      ],
+    });
+
+    const idsMatch = matches.map((m) =>
+      m.usuario1_id === currentUser.id ? m.usuario2_id : m.usuario1_id
+    );
+
+    const idsExcluidos = [...new Set([...idsSwiped, ...idsMatch, currentUser.id])];
+
+    const filter = {
+      id: { $nin: idsExcluidos },
+    };
+
     if (ciudad && ciudad.toLowerCase() !== "todos") {
       filter.ciudad = ciudad;
     }
 
-    // Buscar usuarios según filtro
     const users = await Users.find(filter);
-
-    res.status(200).json(users);
+    res.status(200).json({ usuarios: users });
   } catch (error) {
     console.error("Error al listar usuarios:", error);
-    res
-      .status(500)
-      .json({ message: "Error en el servidor al listar usuarios" });
+    res.status(500).json({ message: "Error en el servidor al listar usuarios" });
   }
 };
+
 
 const swipe = async (req, res) => {
   const { destinoId, accion } = req.body;
